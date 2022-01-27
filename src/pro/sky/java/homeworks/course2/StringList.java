@@ -63,9 +63,9 @@ public interface StringList {
     // Сравнить текущий список с другим.
     // Вернуть true/false или исключение,
     // если передан null.
-//    boolean equals(StringList otherList);
+    boolean equals(StringList otherList);
 
-    boolean equals(StringList[] otherList);
+//    boolean equals(StringList[] otherList);
 
     // Вернуть фактическое количество элементов.
     int size();
@@ -82,5 +82,4 @@ public interface StringList {
     // из строк в списке
     // и вернуть его.
     String[] toArray();
-
 }

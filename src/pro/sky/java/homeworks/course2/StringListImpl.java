@@ -9,50 +9,65 @@ import java.util.stream.Collectors;
 public class StringListImpl implements StringList {
 
     private final String[] stringList;
+    private int size = 0;
 
-    public StringListImpl(int size) {
-        stringList = new String[size];
+    public StringListImpl(int length) {
+        stringList = new String[length];
     }
 
     @Override
     public String add(String item) {
-        for (int a = 0; a < stringList.length; a++) {
-            if (stringList[a] == null) {
-                stringList[a] = item;
-                System.out.println(item + " добавлена в ячейку " + a);
-                return item;
-            }
+        if (size >= stringList.length) {
+            throw new ArrayIndexOutOfBoundsException("Массив заполнен");
         }
-        throw new ArrayIndexOutOfBoundsException("Массив заполнен");
-    }
-
-    @Override
-    public String add(int index, String item) {
-        if (index >= stringList.length || index <= 0 || stringList[index] != null) {
-            throw new ArrayIndexOutOfBoundsException("Ячейки " + index + " в массиве нет или она занята");
-        }
-        stringList[index] = item;
-        System.out.println(item + " добавлена в ячейку " + index);
+        stringList[size] = item;
+        size++;
         return item;
     }
 
     @Override
-    public String set(int index, String item) {
-        if (index >= stringList.length || index <= 0) {
+    public String add(int index, String item) {
+        if (index >= stringList.length || index < 0) {
             throw new ArrayIndexOutOfBoundsException("Ячейки " + index + " в массиве нет");
         }
+        if (stringList[index - 1] == null) {
+            throw new ArrayIndexOutOfBoundsException(index + " выходит за пределы фактического\n" +
+                    "    // количества элементов");
+        }
+        if (stringList[stringList.length - 1] != null) {
+            throw new ArrayIndexOutOfBoundsException("Массив заполнен, добавление нового элемента невозможно");
+        } else if (stringList[stringList.length - 1] == null && stringList[index] != null) {
+            System.arraycopy(stringList, index, stringList, index + 1, stringList.length - 1 - (index + 1));
+            stringList[index] = item;
+            size++;
+            return item;
+        }
         stringList[index] = item;
-        System.out.println(item + " изменила содержание в ячейке " + index);
+        size++;
+        return item;
+        }
+
+    @Override
+    public String set(int index, String item) {
+        if (index >= stringList.length || index < 0) {
+            throw new ArrayIndexOutOfBoundsException("Ячейки " + index + " в массиве нет");
+        }
+        if (stringList[index - 1] == null) {
+            throw new ArrayIndexOutOfBoundsException(index + " выходит за пределы фактического\n" +
+                    "    // количества элементов");
+        }
+        stringList[index] = item;
+        size++;
         return item;
     }
 
     @Override
     public String remove(String item) {
-        for (int b = 0; b < stringList.length; b++) {
-            if (stringList[b] == item) {
-                stringList[b] = null;
-                System.out.println(item + " удалена");
-                item = null;
+        for (int j = 0; j < stringList.length; j++) {
+            if (stringList[j].equals(item)) {
+                stringList[j] = null;
+                System.arraycopy(stringList, j + 1, stringList, j, stringList.length - 1 - j);
+                size--;
                 return item;
             }
         }
@@ -61,32 +76,34 @@ public class StringListImpl implements StringList {
 
     @Override
     public String remove(int index) {
-        if (index >= stringList.length || index <= 0) {
+        if (index >= stringList.length || index < 0) {
             throw new ArrayIndexOutOfBoundsException("Ячейки " + index + " в массиве нет");
+        }
+        if (stringList[index] == null) {
+            throw new NullPointerException("Ячейка пуста");
         }
         String removedStringByIndex = stringList[index];
         stringList[index] = null;
-        System.out.println("Из ячейки " + index + " удалена " + removedStringByIndex);
+        System.arraycopy(stringList, index + 1, stringList, index, stringList.length - 1 - index);
+        size--;
         return removedStringByIndex;
     }
 
     @Override
     public boolean contains(String item) {
-        for (int с = 0; с < stringList.length; с++) {
-            if (stringList[с] == item) {
-                System.out.println(item + " найдена");
+        for (String s : stringList) {
+            if (s.equals(item)) {
                 return true;
             }
         }
-        throw new ArrayIndexOutOfBoundsException(item + " не найдена");
+        return false;
     }
 
     @Override
     public int indexOf(String item) {
-        for (int c = 0; c < stringList.length; c++) {
-            if (stringList[c] == item) {
-                System.out.println("Строка " + item + " найдена под индексом " + c);
-                return c;
+        for (int k = 0; k < stringList.length; k++) {
+            if (stringList[k].equals(item)) {
+                return k;
             }
         }
         return -1;
@@ -94,10 +111,12 @@ public class StringListImpl implements StringList {
 
     @Override
     public int lastIndexOf(String item) {
-        for (int c = stringList.length - 1; c >= 0; c--) {
-            if (stringList[c] == item) {
-                System.out.println(item + " найдена с конца в ячейке " + c);
-                return c;
+        for (int k = stringList.length - 1; k >= 0; k--) {
+            if (stringList[k] == null) {
+                continue;
+            }
+            if (stringList[k].equals(item)) {
+                return k;
             }
         }
         return -1;
@@ -108,68 +127,52 @@ public class StringListImpl implements StringList {
         if (index >= stringList.length || index <= 0) {
             throw new ArrayIndexOutOfBoundsException("Ячейки " + index + " в массиве нет");
         }
-        System.out.println("В ячейке " + index + " найдена строка " + stringList[index]);
         return stringList[index];
     }
 
     @Override
-    public boolean equals(StringList[] otherList) {
-        if (Arrays.equals(stringList, otherList)) {
-            return true;
-        } else if (otherList == null) {
-            throw new IllegalArgumentException("Передан пустой массив");
+    public boolean equals(StringList otherList) {
+        if (otherList == null || getClass() != otherList.getClass()) {
+            throw new NullPointerException("Передан null...");
         }
-        return false;
+        StringListImpl that = (StringListImpl) otherList;
+        return Arrays.equals(stringList, that.stringList);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(stringList);
     }
 
     @Override
     public int size() {
-        int CountOfNotNullCells = 0;
-        for (int calculatingCells = 0; calculatingCells < stringList.length; calculatingCells++) {
-            if (stringList[calculatingCells] != null) {
-                CountOfNotNullCells++;
-            }
-        }
-        return CountOfNotNullCells;
+        return size;
     }
 
     @Override
     public boolean isEmpty() {
-        int nullCells = 0;
-        for (int cells = 0; cells < stringList.length; cells++) {
-            if (stringList[cells] == null) {
-                nullCells++;
+        for (String s : stringList) {
+            if (s != null) {
+                return false;
             }
         }
-        if (nullCells == stringList.length) {
-            return true;
-        }
-        return false;
+    return true;
     }
 
     @Override
     public void clear() {
-        for (int e = 0; e < stringList.length; e++) {
-            stringList[e] = null;
-        }
+        Arrays.fill(stringList, null);
     }
 
     @Override
     public String[] toArray() {
+//       String[] newStringListArray = Arrays.copyOf(stringList, stringList.length);
+//       return newStringListArray;
+
         return Arrays.stream(stringList)
                 .filter(e -> e != null)
                 .toArray(String[]::new);
     }
-
-//    private int getCountOfFreeCells() {
-//            int innerCountOfFreeCells = 0;
-//            for (int calculatingFreeCells = 0; calculatingFreeCells < stringList.length; calculatingFreeCells++) {
-//                if (stringList[calculatingFreeCells] == null) {
-//                    innerCountOfFreeCells++;
-//                }
-//            }
-//            return innerCountOfFreeCells;
-//        }
 }
 
 
